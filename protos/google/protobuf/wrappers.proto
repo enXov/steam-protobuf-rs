@@ -3,45 +3,45 @@ syntax = "proto3";
 package google.protobuf;
 
 option cc_enable_arenas = true;
-option go_package = "google.golang.org/protobuf/types/known/wrapperspb";
-option java_package = "com.google.protobuf";
-option java_outer_classname = "WrappersProto";
-option java_multiple_files = true;
-option objc_class_prefix = "GPB";
 option csharp_namespace = "Google.Protobuf.WellKnownTypes";
+option go_package = "google.golang.org/protobuf/types/known/wrapperspb";
+option java_multiple_files = true;
+option java_outer_classname = "WrappersProto";
+option java_package = "com.google.protobuf";
+option objc_class_prefix = "GPB";
 
 message DoubleValue {
-	optional double value = 1;
+  optional double value = 1;
 }
 
 message FloatValue {
-	optional float value = 1;
+  optional float value = 1;
 }
 
 message Int64Value {
-	optional int64 value = 1;
+  optional int64 value = 1;
 }
 
 message UInt64Value {
-	optional uint64 value = 1;
+  optional uint64 value = 1;
 }
 
 message Int32Value {
-	optional int32 value = 1;
+  optional int32 value = 1;
 }
 
 message UInt32Value {
-	optional uint32 value = 1;
+  optional uint32 value = 1;
 }
 
 message BoolValue {
-	optional bool value = 1;
+  optional bool value = 1;
 }
 
 message StringValue {
-	optional string value = 1;
+  optional string value = 1;
 }
 
 message BytesValue {
-	optional bytes value = 1;
+  optional bytes value = 1;
 }

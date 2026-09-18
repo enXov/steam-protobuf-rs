@@ -100,63 +100,48 @@ jobs:
         run: |
           ./steam-protobuf-dumper steam_bins/steamclient.so steam_bins/steamui.so protos/
 
-      # ── 6. Check for proto changes ──────────────────────────────────────────
+      # ── 6. Normalize proto formatting ───────────────────────────────────────
       # The dumper produces valid proto files but with non-deterministic field
-      # ordering. Every run shuffles the same content into a different line
-      # order, so `git diff` always sees false "changes". We normalize by
-      # sorting each file's lines before hashing - only real semantic changes
-      # (new fields, removed messages, changed values) trigger a rebuild.
-      - name: Detect proto changes
-        id: diff
+      # ordering. `buf format` rewrites them into a canonical style (sorted
+      # imports, ordered declarations, consistent whitespace) so that
+      # `git diff` only detects real semantic changes.
+      - name: Normalize protos
         run: |
           set -euo pipefail
 
-          # Normalized hash: sort filenames, then sort lines within each file.
-          # This makes the hash insensitive to line ordering.
-          normalize_hash() {
-            find "$1" -name "*.proto" | sort | while IFS= read -r f; do
-              echo "=== $(basename "$f") ==="
-              sort "$f"
-            done | sha256sum | cut -d' ' -f1
-          }
+          # Install buf CLI via snap (available on Ubuntu runners)
+          sudo snap install buf
+          echo "  ✓ buf $(buf --version)"
 
-          # Save the dumped protos aside
-          cp -r protos/ /tmp/new_protos/
+          # Canonicalize all proto files
+          buf format -w protos/
 
-          # Hash of committed (pre-dump) protos
-          git checkout -- protos/
-          HASH_OLD=$(normalize_hash protos/)
-
-          # Restore dumped protos
-          rm -rf protos/
-          cp -r /tmp/new_protos/ protos/
-          HASH_NEW=$(normalize_hash protos/)
-
-          echo "Old hash: ${HASH_OLD}"
-          echo "New hash: ${HASH_NEW}"
-
-          if [[ "$HASH_OLD" == "$HASH_NEW" ]]; then
-            echo "No semantic protobuf changes (ordering differences only)."
-            git checkout -- protos/
+      # ── 7. Check for proto changes ──────────────────────────────────────────
+      - name: Detect proto changes
+        id: diff
+        run: |
+          if git diff --quiet protos/; then
+            echo "No protobuf changes detected."
             echo "changed=false" >> "$GITHUB_OUTPUT"
           else
-            echo "Real protobuf changes detected!"
+            echo "Protobuf changes detected!"
+            git diff --stat protos/
             echo "changed=true" >> "$GITHUB_OUTPUT"
           fi
 
-      # ── 7. Install protoc (required by prost-build) ─────────────────────────
+      # ── 8. Install protoc (required by prost-build) ─────────────────────────
       - name: Install protoc
         if: steps.diff.outputs.changed == 'true'
         run: sudo apt-get update && sudo apt-get install -y protobuf-compiler
 
-      # ── 8. Regenerate Rust types ─────────────────────────────────────────────
+      # ── 9. Regenerate Rust types ─────────────────────────────────────────────
       - name: Generate Rust types
         if: steps.diff.outputs.changed == 'true'
         run: |
           cargo build --features codegen
           cargo fmt
 
-      # ── 9. Update metadata ──────────────────────────────────────────────────
+      # ── 10. Update metadata ──────────────────────────────────────────────────
       - name: Bump version & metadata
         if: steps.diff.outputs.changed == 'true'
         run: |
@@ -181,7 +166,7 @@ jobs:
 
           echo "version=${NEW_VERSION}" >> "$GITHUB_OUTPUT"
 
-      # ── 10. Validate ─────────────────────────────────────────────────────────
+      # ── 11. Validate ─────────────────────────────────────────────────────────
       - name: Validate
         if: steps.diff.outputs.changed == 'true'
         run: |
@@ -189,7 +174,7 @@ jobs:
           cargo check
           cargo package --allow-dirty
 
-      # ── 11. Commit, tag, publish ────────────────────────────────────────────
+      # ── 12. Commit, tag, publish ────────────────────────────────────────────
       - name: Commit & publish
         if: steps.diff.outputs.changed == 'true'
         env:
