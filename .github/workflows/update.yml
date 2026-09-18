@@ -28,7 +28,7 @@ jobs:
       # ── 2. Rust toolchain ────────────────────────────────────────────────────
       - uses: dtolnay/rust-toolchain@stable
         with:
-          components: clippy, rustfmt
+          components: rustfmt
 
       # ── 3. Download Steam client binaries from Valve's CDN ───────────────────
       - name: Download Steam binaries
@@ -100,50 +100,105 @@ jobs:
         run: |
           ./steam-protobuf-dumper steam_bins/steamclient.so steam_bins/steamui.so protos/
 
-      # ── 6. Normalize proto formatting ───────────────────────────────────────
-      # The dumper produces valid proto files but with non-deterministic field
-      # ordering. `buf format` rewrites them into a canonical style (sorted
-      # imports, ordered declarations, consistent whitespace) so that
-      # `git diff` only detects real semantic changes.
-      - name: Normalize protos
-        run: |
-          set -euo pipefail
-
-          # Install buf CLI (direct binary - official method)
-          curl -sSL "https://github.com/bufbuild/buf/releases/latest/download/buf-Linux-x86_64" -o /usr/local/bin/buf
-          chmod +x /usr/local/bin/buf
-          echo "  ✓ buf $(buf --version)"
-
-          # Canonicalize all proto files
-          buf format -w protos/
-
-      # ── 7. Check for proto changes ──────────────────────────────────────────
+      # ── 6. Normalize & detect proto changes ─────────────────────────────────
+      # The dumper shuffles declaration order (fields, messages, enums)
+      # non-deterministically on every run. We use:
+      #   1. buf format  → canonical formatting (whitespace, imports)
+      #   2. sorted-line hash → content comparison ignoring declaration order
+      #
+      # Baseline is extracted via `git archive HEAD` into a temp dir so that
+      # untracked files from the dumper never leak into HASH_OLD.
       - name: Detect proto changes
         id: diff
         run: |
-          if git diff --quiet protos/; then
-            echo "No protobuf changes detected."
-            echo "changed=false" >> "$GITHUB_OUTPUT"
-          else
-            echo "Protobuf changes detected!"
-            git diff --stat protos/
-            echo "changed=true" >> "$GITHUB_OUTPUT"
+          set -euo pipefail
+
+          # Install buf CLI
+          curl -sSL \
+            "https://github.com/bufbuild/buf/releases/latest/download/buf-Linux-x86_64" \
+            -o /usr/local/bin/buf
+          chmod +x /usr/local/bin/buf
+          echo "  ✓ buf $(buf --version)"
+
+          # Format freshly dumped protos
+          buf format -w protos/
+
+          # Temporary snapshots — cleaned up on exit
+          OLD_DIR=$(mktemp -d)
+          NEW_DIR=$(mktemp -d)
+          cleanup() { rm -rf "$OLD_DIR" "$NEW_DIR"; }
+          trap cleanup EXIT
+
+          # NEW = freshly dumped + formatted
+          cp -a protos/. "$NEW_DIR/"
+
+          # OLD = exact state committed at HEAD (no untracked file leaks)
+          if git ls-tree -d --name-only HEAD protos/ 2>/dev/null | grep -qx 'protos'; then
+            git archive HEAD -- protos/ | tar -x -C "$OLD_DIR"
+            # Normalize old files with the same formatter for fair comparison
+            buf format -w "$OLD_DIR/protos/"
           fi
 
-      # ── 8. Install protoc (required by prost-build) ─────────────────────────
+          # Sorted-content hash: sorts lines within each file before hashing,
+          # making the comparison insensitive to declaration ordering.
+          # Includes relative file path to detect added/removed files.
+          content_hash() {
+            local dir="$1"
+            if [[ ! -d "$dir" ]]; then
+              printf 'empty\n' | sha256sum | cut -d' ' -f1
+              return
+            fi
+            if ! find "$dir" -type f -name '*.proto' -print -quit | grep -q .; then
+              printf 'empty\n' | sha256sum | cut -d' ' -f1
+              return
+            fi
+            find "$dir" -type f -name '*.proto' -print0 \
+              | sort -z \
+              | while IFS= read -r -d '' file; do
+                  rel="${file#"$dir"/}"
+                  printf '=== FILE: %s ===\n' "$rel"
+                  sort "$file"
+                done \
+              | sha256sum \
+              | cut -d' ' -f1
+          }
+
+          HASH_OLD="$(content_hash "$OLD_DIR/protos")"
+          HASH_NEW="$(content_hash "$NEW_DIR")"
+
+          echo "Committed hash: $HASH_OLD"
+          echo "Dumped hash:    $HASH_NEW"
+
+          if [[ "$HASH_OLD" == "$HASH_NEW" ]]; then
+            echo "No protobuf content changes (ordering differences only)."
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "Real protobuf changes detected!"
+            # Keep freshly dumped + formatted protos for code generation
+            rm -rf protos
+            mkdir -p protos
+            cp -a "$NEW_DIR"/. protos/
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+            echo
+            echo "Changed files:"
+            git status --short protos/
+          fi
+
+      # ── 7. Install protoc (required by prost-build) ─────────────────────────
       - name: Install protoc
         if: steps.diff.outputs.changed == 'true'
         run: sudo apt-get update && sudo apt-get install -y protobuf-compiler
 
-      # ── 9. Regenerate Rust types ─────────────────────────────────────────────
+      # ── 8. Regenerate Rust types ─────────────────────────────────────────────
       - name: Generate Rust types
         if: steps.diff.outputs.changed == 'true'
         run: |
           cargo build --features codegen
           cargo fmt
 
-      # ── 10. Update metadata ──────────────────────────────────────────────────
+      # ── 9. Update metadata ──────────────────────────────────────────────────
       - name: Bump version & metadata
+        id: version
         if: steps.diff.outputs.changed == 'true'
         run: |
           set -euo pipefail
@@ -167,7 +222,7 @@ jobs:
 
           echo "version=${NEW_VERSION}" >> "$GITHUB_OUTPUT"
 
-      # ── 11. Validate ─────────────────────────────────────────────────────────
+      # ── 10. Validate ─────────────────────────────────────────────────────────
       - name: Validate
         if: steps.diff.outputs.changed == 'true'
         run: |
@@ -175,7 +230,7 @@ jobs:
           cargo check
           cargo package --allow-dirty
 
-      # ── 12. Commit, tag, publish ────────────────────────────────────────────
+      # ── 11. Commit, tag, publish ────────────────────────────────────────────
       - name: Commit & publish
         if: steps.diff.outputs.changed == 'true'
         env:
