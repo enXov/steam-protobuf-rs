@@ -8,6 +8,9 @@ repository = "https://github.com/enXov/steam-protobuf-rs"
 readme = "README.md"
 keywords = ["steam", "protobuf", "valve", "steamkit", "prost"]
 categories = ["encoding", "game-development"]
+# Only ship what end users need. protos/, .github/, and build.rs
+# (codegen-only) stay in the repo but don't bloat the crate.
+include = ["src/**", "build.rs", "LICENSE-*", "README.md"]
 
 [features]
 default = []
