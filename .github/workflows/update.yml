@@ -1,0 +1,172 @@
+name: Update Steam Protobufs
+
+on:
+  schedule:
+    # Weekdays: check every 3 hours during business hours (PST).
+    - cron: "0 9,12,15,18,21 * * MON-FRI"
+    # Weekends: check twice a day.
+    - cron: "0 0,12 * * SAT,SUN"
+  workflow_dispatch:
+
+concurrency:
+  group: update
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  update:
+    name: Check & Update
+    runs-on: ubuntu-latest
+
+    steps:
+      # ── 1. Checkout ──────────────────────────────────────────────────────────
+      - uses: actions/checkout@v4
+
+      # ── 2. Rust toolchain ────────────────────────────────────────────────────
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy, rustfmt
+
+      # ── 3. Download Steam client binaries from Valve's CDN ───────────────────
+      - name: Download Steam binaries
+        run: |
+          set -euo pipefail
+
+          MANIFEST_URL="https://client-update.fastly.steamstatic.com/steam_client_publicbeta_ubuntu12"
+          CDN_BASE="https://client-update.fastly.steamstatic.com"
+
+          echo "Fetching Steam client manifest..."
+          MANIFEST=$(curl -sL "$MANIFEST_URL")
+
+          BINS_FILE=$(echo "$MANIFEST" | grep -A3 '"bins_ubuntu12"' | grep '"file"' | awk -F'"' '{print $4}')
+
+          if [[ -z "$BINS_FILE" ]]; then
+            echo "ERROR: Could not find bins_ubuntu12 entry in manifest" >&2
+            exit 1
+          fi
+
+          DOWNLOAD_URL="${CDN_BASE}/${BINS_FILE}"
+          TEMP_DIR=$(mktemp -d)
+
+          echo "Downloading ${BINS_FILE}..."
+          curl -sL --progress-bar -o "${TEMP_DIR}/bins.zip" "$DOWNLOAD_URL"
+
+          echo "Extracting steamclient.so and steamui.so..."
+          mkdir -p steam_bins
+          unzip -o -j "${TEMP_DIR}/bins.zip" "ubuntu12_32/steamclient.so" "ubuntu12_32/steamui.so" -d steam_bins
+
+          rm -rf "$TEMP_DIR"
+
+          for BIN in steamclient.so steamui.so; do
+            if [[ -f "steam_bins/${BIN}" ]]; then
+              SIZE=$(du -h "steam_bins/${BIN}" | cut -f1)
+              echo "  ✓ ${BIN} (${SIZE})"
+            else
+              echo "  ✗ ${BIN} not found" >&2
+              exit 1
+            fi
+          done
+
+      # ── 4. Download steam-protobuf-dumper from GitHub Releases ───────────────
+      - name: Download dumper
+        run: |
+          set -euo pipefail
+
+          echo "Fetching latest steam-protobuf-dumper release..."
+          DOWNLOAD_URL=$(curl -sL \
+            "https://api.github.com/repos/enXov/steam-protobuf-dumper/releases/latest" \
+            | grep -o '"browser_download_url": *"[^"]*x86_64-unknown-linux-gnu[^"]*"' \
+            | head -1 \
+            | cut -d'"' -f4)
+
+          if [[ -z "$DOWNLOAD_URL" ]]; then
+            echo "ERROR: Could not find linux release asset" >&2
+            exit 1
+          fi
+
+          echo "Downloading from ${DOWNLOAD_URL}..."
+          curl -sL -o dumper.tar.gz "$DOWNLOAD_URL"
+          tar xzf dumper.tar.gz
+          chmod +x steam-protobuf-dumper
+          rm dumper.tar.gz
+
+          echo "  ✓ steam-protobuf-dumper ready"
+
+      # ── 5. Run dumper to extract .proto files ────────────────────────────────
+      - name: Extract protos
+        run: |
+          ./steam-protobuf-dumper steam_bins/steamclient.so steam_bins/steamui.so protos/
+
+      # ── 6. Check for proto changes ──────────────────────────────────────────
+      - name: Detect proto changes
+        id: diff
+        run: |
+          if git diff --quiet protos/; then
+            echo "No protobuf changes detected."
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "Protobuf changes detected!"
+            git diff --stat protos/
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      # ── 7. Regenerate Rust types ─────────────────────────────────────────────
+      - name: Generate Rust types
+        if: steps.diff.outputs.changed == 'true'
+        run: |
+          cargo build --features codegen
+          cargo fmt
+
+      # ── 8. Update metadata ──────────────────────────────────────────────────
+      - name: Bump version & metadata
+        if: steps.diff.outputs.changed == 'true'
+        run: |
+          set -euo pipefail
+
+          # Read current version
+          CURRENT=$(grep '^version' Cargo.toml | head -1 | sed 's/.*"\(.*\)"/\1/')
+          echo "Current version: ${CURRENT}"
+
+          # Bump patch version
+          IFS='.' read -r MAJOR MINOR PATCH <<< "$CURRENT"
+          NEW_VERSION="${MAJOR}.${MINOR}.$((PATCH + 1))"
+          echo "New version: ${NEW_VERSION}"
+
+          # Update Cargo.toml version
+          sed -i "s/^version = \"${CURRENT}\"/version = \"${NEW_VERSION}\"/" Cargo.toml
+
+          # Update metadata constants in src/lib.rs
+          DATE=$(date -u +%Y-%m-%d)
+          sed -i "s/^pub const STEAM_BUILD:.*$/pub const STEAM_BUILD: \&str = \"${NEW_VERSION}\";/" src/lib.rs
+          sed -i "s/^pub const GENERATED_AT:.*$/pub const GENERATED_AT: \&str = \"${DATE}\";/" src/lib.rs
+
+          echo "version=${NEW_VERSION}" >> "$GITHUB_OUTPUT"
+
+      # ── 9. Validate ─────────────────────────────────────────────────────────
+      - name: Validate
+        if: steps.diff.outputs.changed == 'true'
+        run: |
+          cargo fmt --check
+          cargo check
+          cargo package --allow-dirty
+
+      # ── 10. Commit, tag, publish ────────────────────────────────────────────
+      - name: Commit & publish
+        if: steps.diff.outputs.changed == 'true'
+        env:
+          CRATES_IO_TOKEN: ${{ secrets.CRATES_IO_TOKEN }}
+        run: |
+          set -euo pipefail
+
+          NEW_VERSION=$(grep '^version' Cargo.toml | head -1 | sed 's/.*"\(.*\)"/\1/')
+
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add protos/ src/generated/ Cargo.toml Cargo.lock src/lib.rs
+          git commit -m "chore: update Steam protobufs to v${NEW_VERSION}"
+          git tag "v${NEW_VERSION}"
+          git push origin main --tags
+
+          cargo publish --token "$CRATES_IO_TOKEN" --allow-dirty

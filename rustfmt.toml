@@ -1,0 +1,14 @@
+# ─── Rust formatting config ─────────────────────────────────────────────────
+# Locked by cargo fmt. CI verifies adherence via:
+#   cargo fmt --check
+#
+# See: https://rust-lang.github.io/rustfmt/
+
+# Match the project's Rust edition.
+edition = "2024"
+
+max_width = 100
+
+tab_spaces = 4
+
+newline_style = "Unix"
