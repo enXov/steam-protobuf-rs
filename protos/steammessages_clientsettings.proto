@@ -96,8 +96,8 @@ message CMsgClientSettings {
     (setting_name) = "HKEY_CURRENT_USER\\Software\\Valve\\Steam\\CEFGPUBlocklistDisabled"
   ];
   optional bool bigpicture_windowed = 7 [
-    (setting_pre_login) = true,
     (setting_store) = k_EClientSettingStore_ConfigStore_Install,
+    (setting_pre_login) = true,
     (setting_name) = "BigPicture/Windowed"
   ];
   optional string display_name = 8 [
@@ -159,13 +159,13 @@ message CMsgClientSettings {
     (setting_name) = "system\\InGameOverlayShowFPSContrast"
   ];
   optional .CMsgHotkey overlay_key = 4002 [
-    (setting_store) = k_EClientSettingStore_ConfigStore_UserLocal,
     (setting_default_string) = "Shift\tKEY_TAB",
+    (setting_store) = k_EClientSettingStore_ConfigStore_UserLocal,
     (setting_name) = "system\\InGameOverlayShortcutKey"
   ];
   optional .CMsgHotkey screenshot_key = 4003 [
-    (setting_store) = k_EClientSettingStore_ConfigStore_UserLocal,
     (setting_default_string) = "KEY_F12",
+    (setting_store) = k_EClientSettingStore_ConfigStore_UserLocal,
     (setting_name) = "system\\InGameOverlayScreenshotHotKey"
   ];
   optional bool enable_overlay = 4004 [
@@ -189,9 +189,9 @@ message CMsgClientSettings {
   ];
   optional string screenshots_path = 4009 [(setting_store) = k_EClientSettingStore_CustomFunc];
   optional int32 default_ping_rate = 4010 [
+    (setting_store) = k_EClientSettingStore_CustomFunc,
     (setting_description) = "Computed default (automatic) server ping rate based on network speed",
-    (setting_readonly) = true,
-    (setting_store) = k_EClientSettingStore_CustomFunc
+    (setting_readonly) = true
   ];
   optional int32 server_ping_rate = 4011 [(setting_store) = k_EClientSettingStore_CustomFunc];
   optional int32 steam_networking_share_ip = 4012 [(setting_store) = k_EClientSettingStore_CustomFunc];
@@ -248,8 +248,8 @@ message CMsgClientSettings {
     (setting_name) = "system\\InGameOverlayShowFPSScaling"
   ];
   optional .CMsgHotkey overlay_fps_counter_key = 4029 [
-    (setting_store) = k_EClientSettingStore_ConfigStore_UserLocal,
     (setting_default_string) = "Default",
+    (setting_store) = k_EClientSettingStore_ConfigStore_UserLocal,
     (setting_name) = "system\\InGameOverlayShowFPSHotKey"
   ];
   optional bool overlay_fps_counter_fps_graph = 4030 [
@@ -319,8 +319,8 @@ message CMsgClientSettings {
   ];
   optional bool start_in_big_picture_mode = 5007 [(setting_store) = k_EClientSettingStore_CustomFunc];
   optional uint32 jumplist_flags = 5008 [
-    (setting_default_uint) = 77680,
     (setting_store) = k_EClientSettingStore_ConfigStore_UserLocal,
+    (setting_default_uint) = 77680,
     (setting_name) = "system\\JumplistSettings"
   ];
   optional bool enable_ui_sounds = 5009 [
@@ -339,8 +339,8 @@ message CMsgClientSettings {
     (setting_name) = "HKEY_CURRENT_USER\\Software\\Valve\\Steam\\EnableGamescopeComposerVR"
   ];
   optional bool show_switch_to_desktop_at_login = 5012 [
-    (setting_pre_login) = true,
     (setting_store) = k_EClientSettingStore_ConfigStore_Install,
+    (setting_pre_login) = true,
     (setting_name) = "system\\ShowSwitchToDesktopAtLogin"
   ];
   optional bool enable_steamrt64_client = 5013 [(setting_store) = k_EClientSettingStore_CustomFunc];
@@ -403,12 +403,12 @@ message CMsgClientSettings {
   optional bool enable_shader_precache = 8000 [(setting_store) = k_EClientSettingStore_CustomFunc];
   optional bool enable_shader_background_processing = 8001 [(setting_store) = k_EClientSettingStore_CustomFunc];
   optional uint64 shader_precached_size = 8002 [
-    (setting_readonly) = true,
-    (setting_store) = k_EClientSettingStore_CustomFunc
+    (setting_store) = k_EClientSettingStore_CustomFunc,
+    (setting_readonly) = true
   ];
   optional bool needs_steam_service_repair = 8003 [
-    (setting_readonly) = true,
-    (setting_store) = k_EClientSettingStore_CustomFunc
+    (setting_store) = k_EClientSettingStore_CustomFunc,
+    (setting_readonly) = true
   ];
   optional int32 download_peer_content = 8004 [(setting_store) = k_EClientSettingStore_CustomFunc];
   optional bool download_rate_bits_per_s = 8005 [(setting_store) = k_EClientSettingStore_CustomFunc];
@@ -599,18 +599,18 @@ message CMsgClientSettings {
     (setting_name) = "SteamInput/ChatRadialMenu/7"
   ];
   optional uint64 startup_movie_id = 16000 [
-    (setting_pre_login) = true,
     (setting_store) = k_EClientSettingStore_ConfigStore_Install,
+    (setting_pre_login) = true,
     (setting_name) = "Customization/StartupMovie/MovieID"
   ];
   optional string startup_movie_local_path = 16001 [
-    (setting_pre_login) = true,
     (setting_store) = k_EClientSettingStore_ConfigStore_Install,
+    (setting_pre_login) = true,
     (setting_name) = "Customization/StartupMovie/LocalPath"
   ];
   optional bool startup_movie_shuffle = 16002 [
-    (setting_pre_login) = true,
     (setting_store) = k_EClientSettingStore_ConfigStore_Install,
+    (setting_pre_login) = true,
     (setting_name) = "Customization/StartupMovie/Shuffle"
   ];
   optional bool startup_movie_used_for_resume = 16003 [
@@ -637,8 +637,8 @@ message CMsgClientSettings {
   ];
   optional string gamerecording_background_path = 18201 [(setting_store) = k_EClientSettingStore_CustomFunc];
   optional string gamerecording_background_max_keep = 18202 [
-    (setting_store) = k_EClientSettingStore_ConfigStore_UserLocal,
     (setting_default_string) = "120min",
+    (setting_store) = k_EClientSettingStore_ConfigStore_UserLocal,
     (setting_name) = "GameRecording\\BackgroundMaxKeep"
   ];
   optional int32 gamerecording_background_time_resolution = 18203 [
@@ -647,13 +647,13 @@ message CMsgClientSettings {
     (setting_name) = "GameRecording\\BackgroundTimeResolution"
   ];
   optional .CMsgHotkey gamerecording_background_mk = 18207 [
-    (setting_store) = k_EClientSettingStore_ConfigStore_UserLocal,
     (setting_default_string) = "Ctrl\tKEY_F12",
+    (setting_store) = k_EClientSettingStore_ConfigStore_UserLocal,
     (setting_name) = "GameRecording\\MarkerKey"
   ];
   optional .CMsgHotkey gamerecording_background_tg = 18208 [
-    (setting_store) = k_EClientSettingStore_ConfigStore_UserLocal,
     (setting_default_string) = "Ctrl\tKEY_F11",
+    (setting_store) = k_EClientSettingStore_ConfigStore_UserLocal,
     (setting_name) = "GameRecording\\ToggleKey"
   ];
   optional bool gamerecording_background_a_m = 18209 [
@@ -662,8 +662,8 @@ message CMsgClientSettings {
     (setting_name) = "GameRecording\\Audio_Mic"
   ];
   optional string gamerecording_video_bitrate = 18210 [
-    (setting_store) = k_EClientSettingStore_ConfigStore_UserLocal,
     (setting_default_string) = "preset_default",
+    (setting_store) = k_EClientSettingStore_ConfigStore_UserLocal,
     (setting_name) = "GameRecording\\VideoBitRate"
   ];
   optional .EGRMode gamerecording_background_mode = 18212 [
@@ -681,13 +681,13 @@ message CMsgClientSettings {
   optional int32 gamerecording_max_fps = 18214 [
     (setting_default_int) = 60,
     (setting_store) = k_EClientSettingStore_ConfigStore_UserLocal,
-    (setting_clamp_min) = 24,
     (setting_clamp_max) = 120,
+    (setting_clamp_min) = 24,
     (setting_name) = "GameRecording\\MaxFPS"
   ];
   optional .CMsgHotkey gamerecording_hotkey_ic = 18215 [
-    (setting_store) = k_EClientSettingStore_ConfigStore_UserLocal,
     (setting_default_string) = "None",
+    (setting_store) = k_EClientSettingStore_ConfigStore_UserLocal,
     (setting_name) = "GameRecording\\InstantClipKey"
   ];
   optional float gamerecording_ic_seconds = 18216 [
@@ -737,8 +737,8 @@ message CMsgClientSettings {
   optional int32 gamerecording_video_maxheight = 18225 [
     (setting_default_int) = 0,
     (setting_store) = k_EClientSettingStore_ConfigStore_UserLocal,
-    (setting_clamp_min) = 0,
     (setting_clamp_max) = 2160,
+    (setting_clamp_min) = 0,
     (setting_name) = "GameRecording\\VideoMaxHeight"
   ];
   optional bool gamerecording_force_mic_mono = 18226 [
@@ -785,8 +785,8 @@ message CMsgClientSettings {
   ];
   optional int32 gamescope_app_target_framerate = 21002 [
     (setting_default_int) = 0,
-    (setting_profile_mode) = k_ESettingProfileMode_PerGamePerDisplay,
     (setting_store) = k_EClientSettingStore_ConfigStore_UserLocal,
+    (setting_profile_mode) = k_ESettingProfileMode_PerGamePerDisplay,
     (setting_name) = "Gamescope/AppTargetFrameRate"
   ];
   optional bool gamescope_enable_app_target_framerate = 21003 [
@@ -795,15 +795,15 @@ message CMsgClientSettings {
     (setting_name) = "HKEY_CURRENT_USER\\Software\\Valve\\Steam\\GamescopeEnableAppTargetRefreshRate2"
   ];
   optional bool gamescope_disable_framelimit = 21004 [
-    (setting_profile_mode) = k_ESettingProfileMode_PerGamePerDisplay,
     (setting_store) = k_EClientSettingStore_ConfigStore_UserLocal,
+    (setting_profile_mode) = k_ESettingProfileMode_PerGamePerDisplay,
     (setting_default_bool) = false,
     (setting_name) = "Gamescope/DisableFrameLimit"
   ];
   optional int32 gamescope_display_refresh_rate = 21005 [
     (setting_default_int) = 0,
-    (setting_profile_mode) = k_ESettingProfileMode_PerGamePerDisplay,
     (setting_store) = k_EClientSettingStore_ConfigStore_UserLocal,
+    (setting_profile_mode) = k_ESettingProfileMode_PerGamePerDisplay,
     (setting_name) = "Gamescope/RefreshRate"
   ];
   optional bool gamescope_use_game_refresh_rate_in_steam = 21006 [
@@ -822,8 +822,8 @@ message CMsgClientSettings {
     (setting_name) = "Gamescope/IncludeSteamUIInScreenshots"
   ];
   optional bool gamescope_allow_tearing = 21009 [
-    (setting_profile_mode) = k_ESettingProfileMode_PerGame,
     (setting_store) = k_EClientSettingStore_ConfigStore_UserLocal,
+    (setting_profile_mode) = k_ESettingProfileMode_PerGame,
     (setting_default_bool) = false,
     (setting_name) = "Gamescope/AllowTearing"
   ];
@@ -838,23 +838,23 @@ message CMsgClientSettings {
     (setting_name) = "Gamescope/ForceComposite"
   ];
   optional string gamescope_game_resolution_global = 21012 [
-    (setting_store) = k_EClientSettingStore_ConfigStore_UserLocal,
     (setting_default_string) = "Default",
+    (setting_store) = k_EClientSettingStore_ConfigStore_UserLocal,
     (setting_name) = "Gamescope/GameResolutionGlobal"
   ];
   optional .CMsgHotkey gamescope_guide_hotkey = 21013 [
-    (setting_store) = k_EClientSettingStore_ConfigStore_UserLocal,
     (setting_default_string) = "Shift\tKEY_TAB",
+    (setting_store) = k_EClientSettingStore_ConfigStore_UserLocal,
     (setting_name) = "Gamescope/GuideKeyboardHotkey"
   ];
   optional .CMsgHotkey gamescope_qam_hotkey = 21014 [
-    (setting_store) = k_EClientSettingStore_ConfigStore_UserLocal,
     (setting_default_string) = "CTRL\tShift\tKEY_TAB",
+    (setting_store) = k_EClientSettingStore_ConfigStore_UserLocal,
     (setting_name) = "Gamescope/QAMKeyboardHotkey"
   ];
   optional bool gamescope_hdr_enabled = 21015 [
-    (setting_profile_mode) = k_ESettingProfileMode_PerDisplay,
     (setting_store) = k_EClientSettingStore_ConfigStore_Install,
+    (setting_profile_mode) = k_ESettingProfileMode_PerDisplay,
     (setting_default_bool) = true,
     (setting_name) = "Gamescope/HDREnabled"
   ];
@@ -868,15 +868,15 @@ message CMsgClientSettings {
     (setting_name) = "SteamOS/StatusLEDBrightness"
   ];
   optional bool steamos_tdp_limit_enabled = 22001 [
-    (setting_profile_mode) = k_ESettingProfileMode_PerGame,
     (setting_store) = k_EClientSettingStore_ConfigStore_Install,
+    (setting_profile_mode) = k_ESettingProfileMode_PerGame,
     (setting_default_bool) = false,
     (setting_name) = "SteamOS/TDPLimitEnabled"
   ];
   optional int32 steamos_tdp_limit = 22002 [
     (setting_default_int) = 0,
-    (setting_profile_mode) = k_ESettingProfileMode_PerGame,
     (setting_store) = k_EClientSettingStore_ConfigStore_Install,
+    (setting_profile_mode) = k_ESettingProfileMode_PerGame,
     (setting_name) = "SteamOS/TDPLimit"
   ];
   optional bool steamos_cec_enabled = 22003 [
@@ -905,20 +905,20 @@ message CMsgClientSettings {
     (setting_name) = "SteamOS/MagnifierScale"
   ];
   optional bool steamos_manual_gpu_clock_enabled = 22008 [
-    (setting_profile_mode) = k_ESettingProfileMode_PerGame,
     (setting_store) = k_EClientSettingStore_ConfigStore_Install,
+    (setting_profile_mode) = k_ESettingProfileMode_PerGame,
     (setting_default_bool) = false,
     (setting_name) = "SteamOS/ManualGPUClockEnabled"
   ];
   optional int32 steamos_manual_gpu_clock_hz = 22009 [
     (setting_default_int) = 1000,
-    (setting_profile_mode) = k_ESettingProfileMode_PerGame,
     (setting_store) = k_EClientSettingStore_ConfigStore_Install,
+    (setting_profile_mode) = k_ESettingProfileMode_PerGame,
     (setting_name) = "SteamOS/ManualGPUClockHz"
   ];
   optional string steamos_platform_performance_profile = 22010 [
-    (setting_profile_mode) = k_ESettingProfileMode_PerGame,
     (setting_store) = k_EClientSettingStore_ConfigStore_Install,
+    (setting_profile_mode) = k_ESettingProfileMode_PerGame,
     (setting_name) = "SteamOS/PerformanceProfile"
   ];
   optional bool steamos_charge_limit_enabled = 22011 [
@@ -937,14 +937,14 @@ message CMsgClientSettings {
     (setting_name) = "SteamOS/ChargeLimitDevMode"
   ];
   optional bool steamos_system_tracing_enabled = 22014 [
-    (setting_profile_mode) = k_ESettingProfileMode_PerGame,
     (setting_store) = k_EClientSettingStore_ConfigStore_UserLocal,
+    (setting_profile_mode) = k_ESettingProfileMode_PerGame,
     (setting_default_bool) = false,
     (setting_name) = "SteamOS/SystemTracingEnabled"
   ];
   optional bool steamos_vrs_enabled = 22015 [
-    (setting_profile_mode) = k_ESettingProfileMode_PerGame,
     (setting_store) = k_EClientSettingStore_ConfigStore_UserLocal,
+    (setting_profile_mode) = k_ESettingProfileMode_PerGame,
     (setting_default_bool) = false,
     (setting_name) = "SteamOS/VRSEnabled"
   ];
@@ -1112,8 +1112,8 @@ message CMsgClientSettings {
     (setting_name) = "Accessibility/MinimumFontSize"
   ];
   optional string accessibility_color_filter_name = 26009 [
-    (setting_store) = k_EClientSettingStore_ConfigStore_Install,
     (setting_default_string) = "",
+    (setting_store) = k_EClientSettingStore_ConfigStore_Install,
     (setting_name) = "Accessibility/ColorFilterName"
   ];
   optional float accessibility_desktop_ui_scale = 26010 [
@@ -1122,8 +1122,8 @@ message CMsgClientSettings {
     (setting_name) = "Accessibility/DesktopUIScale"
   ];
   optional string accessibility_screen_reader_locale = 26011 [
-    (setting_store) = k_EClientSettingStore_ConfigStore_Install,
     (setting_default_string) = "auto",
+    (setting_store) = k_EClientSettingStore_ConfigStore_Install,
     (setting_name) = "Accessibility/ScreenReaderLocale"
   ];
   optional bool accessibility_mono_audio = 26012 [
@@ -1157,18 +1157,18 @@ message CMsgClientSettings {
     (setting_name) = "streaming_v2\\WifiAPHotspotMode"
   ];
   optional string remote_play_wifi_ap_hotspot_ssid = 27005 [
-    (setting_store) = k_EClientSettingStore_ConfigStore_Install,
     (setting_default_string) = "",
+    (setting_store) = k_EClientSettingStore_ConfigStore_Install,
     (setting_name) = "streaming_v2\\WifiAPHotspotSSID"
   ];
   optional string remote_play_wifi_ap_hotspot_password = 27006 [
-    (setting_store) = k_EClientSettingStore_ConfigStore_Install,
     (setting_default_string) = "",
+    (setting_store) = k_EClientSettingStore_ConfigStore_Install,
     (setting_name) = "streaming_v2\\WifiAPHotspotPassword"
   ];
   optional string remote_play_wifi_ap_hotspot_routing = 27007 [
-    (setting_store) = k_EClientSettingStore_ConfigStore_Install,
     (setting_default_string) = "noroute",
+    (setting_store) = k_EClientSettingStore_ConfigStore_Install,
     (setting_name) = "streaming_v2\\WifiAPHotspotRouting"
   ];
   optional bool remote_play_wifi_ap_show_advanced = 27008 [
@@ -1177,8 +1177,8 @@ message CMsgClientSettings {
     (setting_name) = "streaming_v2/WifiAPShowAdvanced"
   ];
   optional string remote_play_wifi_ap_paired_ssid = 27009 [
-    (setting_store) = k_EClientSettingStore_ConfigStore_Install,
     (setting_default_string) = "",
+    (setting_store) = k_EClientSettingStore_ConfigStore_Install,
     (setting_name) = "streaming_v2\\WifiAPPairedSSID"
   ];
   optional bool skip_steamframe_pairing_dialog = 27010 [
@@ -1194,35 +1194,35 @@ message CMsgClientSettings {
     (setting_name) = "system\\SteamFrameWirelessAdapterAirplaneDialogSkip"
   ];
   optional bool oobe_completed = 28001 [
+    (setting_store) = k_EClientSettingStore_CustomFunc,
     (setting_pre_login) = true,
-    (setting_description) = "True if OOBE stage 1 has completed or we're on a platform where we don't do OOBE",
-    (setting_store) = k_EClientSettingStore_CustomFunc
+    (setting_description) = "True if OOBE stage 1 has completed or we're on a platform where we don't do OOBE"
   ];
   optional bool oobe_test_mode_enabled = 28002 [
+    (setting_store) = k_EClientSettingStore_CustomFunc,
     (setting_pre_login) = true,
     (setting_description) = "OOBE test mode is enabled either by passing -testoobe on the command line or setting the force_oobe client setting",
-    (setting_readonly) = true,
-    (setting_store) = k_EClientSettingStore_CustomFunc
+    (setting_readonly) = true
   ];
   optional bool force_oobe = 28003 [
-    (setting_pre_login) = true,
     (setting_store) = k_EClientSettingStore_Registry,
+    (setting_pre_login) = true,
     (setting_name) = "HKEY_CURRENT_USER\\Software\\Valve\\Steam\\ForceOOBE"
   ];
   optional bool oobe_stage_2_completed = 28004 [
+    (setting_store) = k_EClientSettingStore_CustomFunc,
     (setting_pre_login) = true,
-    (setting_description) = "True if OOBE stage 2 has completed or we're on a platform where we don't do OOBE",
-    (setting_store) = k_EClientSettingStore_CustomFunc
+    (setting_description) = "True if OOBE stage 2 has completed or we're on a platform where we don't do OOBE"
   ];
   optional bool oobe_stage_2_test_mode_enabled = 28005 [
+    (setting_store) = k_EClientSettingStore_CustomFunc,
     (setting_pre_login) = true,
     (setting_description) = "OOBE test mode is enabled for stage 2 either by passing -testoobe on the command line or setting the force_stage2_oobe client setting",
-    (setting_readonly) = true,
-    (setting_store) = k_EClientSettingStore_CustomFunc
+    (setting_readonly) = true
   ];
   optional bool force_stage_2_oobe = 28006 [
-    (setting_pre_login) = true,
     (setting_store) = k_EClientSettingStore_Registry,
+    (setting_pre_login) = true,
     (setting_name) = "HKEY_CURRENT_USER\\Software\\Valve\\Steam\\ForceOOBEStage2"
   ];
   optional bool compat_show_all_tools = 29000 [
