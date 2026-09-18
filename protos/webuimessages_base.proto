@@ -5,12 +5,12 @@ import "steammessages_base.proto";
 option cc_generic_services = true;
 option optimize_for = SPEED;
 
-extend .google.protobuf.ServiceOptions {
-  optional .EClientExecutionSite webui_service_execution_site = 70000 [default = k_EClientExecutionSiteSteamUI];
-}
-
 extend .google.protobuf.MethodOptions {
   optional .EClientExecutionSite webui_method_execution_site = 70000 [default = k_EClientExecutionSiteInvalid];
+}
+
+extend .google.protobuf.ServiceOptions {
+  optional .EClientExecutionSite webui_service_execution_site = 70000 [default = k_EClientExecutionSiteSteamUI];
 }
 
 enum EClientExecutionSite {
