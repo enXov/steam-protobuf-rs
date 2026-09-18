@@ -3,9 +3,10 @@ name: Update Steam Protobufs
 on:
   schedule:
     # Weekdays: check every 3 hours during business hours (PST).
-    - cron: "0 9,12,15,18,21 * * MON-FRI"
+    # Offset to :37 to avoid contention with other cron workflows.
+    - cron: "37 9,12,15,18,21 * * MON-FRI"
     # Weekends: check twice a day.
-    - cron: "0 0,12 * * SAT,SUN"
+    - cron: "37 0,12 * * SAT,SUN"
   workflow_dispatch:
 
 concurrency:
@@ -22,7 +23,7 @@ jobs:
 
     steps:
       # ── 1. Checkout ──────────────────────────────────────────────────────────
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       # ── 2. Rust toolchain ────────────────────────────────────────────────────
       - uses: dtolnay/rust-toolchain@stable
@@ -112,14 +113,19 @@ jobs:
             echo "changed=true" >> "$GITHUB_OUTPUT"
           fi
 
-      # ── 7. Regenerate Rust types ─────────────────────────────────────────────
+      # ── 7. Install protoc (required by prost-build) ─────────────────────────
+      - name: Install protoc
+        if: steps.diff.outputs.changed == 'true'
+        run: sudo apt-get update && sudo apt-get install -y protobuf-compiler
+
+      # ── 8. Regenerate Rust types ─────────────────────────────────────────────
       - name: Generate Rust types
         if: steps.diff.outputs.changed == 'true'
         run: |
           cargo build --features codegen
           cargo fmt
 
-      # ── 8. Update metadata ──────────────────────────────────────────────────
+      # ── 9. Update metadata ──────────────────────────────────────────────────
       - name: Bump version & metadata
         if: steps.diff.outputs.changed == 'true'
         run: |
@@ -144,7 +150,7 @@ jobs:
 
           echo "version=${NEW_VERSION}" >> "$GITHUB_OUTPUT"
 
-      # ── 9. Validate ─────────────────────────────────────────────────────────
+      # ── 10. Validate ─────────────────────────────────────────────────────────
       - name: Validate
         if: steps.diff.outputs.changed == 'true'
         run: |
@@ -152,7 +158,7 @@ jobs:
           cargo check
           cargo package --allow-dirty
 
-      # ── 10. Commit, tag, publish ────────────────────────────────────────────
+      # ── 11. Commit, tag, publish ────────────────────────────────────────────
       - name: Commit & publish
         if: steps.diff.outputs.changed == 'true'
         env:
