@@ -109,8 +109,9 @@ jobs:
         run: |
           set -euo pipefail
 
-          # Install buf CLI via snap (available on Ubuntu runners)
-          sudo snap install buf
+          # Install buf CLI (direct binary - official method)
+          curl -sSL "https://github.com/bufbuild/buf/releases/latest/download/buf-Linux-x86_64" -o /usr/local/bin/buf
+          chmod +x /usr/local/bin/buf
           echo "  ✓ buf $(buf --version)"
 
           # Canonicalize all proto files
