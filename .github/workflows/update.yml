@@ -101,15 +101,46 @@ jobs:
           ./steam-protobuf-dumper steam_bins/steamclient.so steam_bins/steamui.so protos/
 
       # ── 6. Check for proto changes ──────────────────────────────────────────
+      # The dumper produces valid proto files but with non-deterministic field
+      # ordering. Every run shuffles the same content into a different line
+      # order, so `git diff` always sees false "changes". We normalize by
+      # sorting each file's lines before hashing - only real semantic changes
+      # (new fields, removed messages, changed values) trigger a rebuild.
       - name: Detect proto changes
         id: diff
         run: |
-          if git diff --quiet protos/; then
-            echo "No protobuf changes detected."
+          set -euo pipefail
+
+          # Normalized hash: sort filenames, then sort lines within each file.
+          # This makes the hash insensitive to line ordering.
+          normalize_hash() {
+            find "$1" -name "*.proto" | sort | while IFS= read -r f; do
+              echo "=== $(basename "$f") ==="
+              sort "$f"
+            done | sha256sum | cut -d' ' -f1
+          }
+
+          # Save the dumped protos aside
+          cp -r protos/ /tmp/new_protos/
+
+          # Hash of committed (pre-dump) protos
+          git checkout -- protos/
+          HASH_OLD=$(normalize_hash protos/)
+
+          # Restore dumped protos
+          rm -rf protos/
+          cp -r /tmp/new_protos/ protos/
+          HASH_NEW=$(normalize_hash protos/)
+
+          echo "Old hash: ${HASH_OLD}"
+          echo "New hash: ${HASH_NEW}"
+
+          if [[ "$HASH_OLD" == "$HASH_NEW" ]]; then
+            echo "No semantic protobuf changes (ordering differences only)."
+            git checkout -- protos/
             echo "changed=false" >> "$GITHUB_OUTPUT"
           else
-            echo "Protobuf changes detected!"
-            git diff --stat protos/
+            echo "Real protobuf changes detected!"
             echo "changed=true" >> "$GITHUB_OUTPUT"
           fi
 
