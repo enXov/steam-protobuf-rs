@@ -1,6 +1,7 @@
 # steam-protobuf-rs
 
 [![Crates.io](https://img.shields.io/crates/v/steam-protobuf-rs.svg)](https://crates.io/crates/steam-protobuf-rs)
+[![Downloads](https://img.shields.io/crates/d/steam-protobuf-rs.svg)](https://crates.io/crates/steam-protobuf-rs)
 [![License](https://img.shields.io/crates/l/steam-protobuf-rs.svg)](LICENSE-MIT)
 
 Auto-updated, type-safe Steam Protobuf definitions for Rust.
