@@ -9000,6 +9000,8 @@ pub struct CStreamingClientConfig {
     pub pyrowave_custom_bitrate_kbps: ::core::option::Option<i32>,
     #[prost(float, optional, tag = "38")]
     pub pyrowave_quality_modifier: ::core::option::Option<f32>,
+    #[prost(bool, optional, tag = "39")]
+    pub pyrowave_yuv444: ::core::option::Option<bool>,
 }
 #[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct CStreamingServerConfig {
