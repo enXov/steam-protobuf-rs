@@ -32,6 +32,7 @@ jobs:
 
       # ── 3. Download Steam client binaries from Valve's CDN ───────────────────
       - name: Download Steam binaries
+        id: steam
         run: |
           set -euo pipefail
 
@@ -40,6 +41,11 @@ jobs:
 
           echo "Fetching Steam client manifest..."
           MANIFEST=$(curl -sL "$MANIFEST_URL")
+
+          # Extract Steam client build version from manifest
+          STEAM_VERSION=$(echo "$MANIFEST" | grep -m1 '"version"' | awk -F'"' '{print $2}' | tail -1)
+          echo "  Steam client build: ${STEAM_VERSION}"
+          echo "build=${STEAM_VERSION}" >> "$GITHUB_OUTPUT"
 
           BINS_FILE=$(echo "$MANIFEST" | grep -A3 '"bins_ubuntu12"' | grep '"file"' | awk -F'"' '{print $4}')
 
@@ -162,8 +168,9 @@ jobs:
           sed -i "s/^version = \"${CURRENT}\"/version = \"${NEW_VERSION}\"/" Cargo.toml
 
           # Update metadata constants in src/lib.rs
+          STEAM_BUILD="${{ steps.steam.outputs.build }}"
           DATE=$(date -u +%Y-%m-%dT%H:%M:%SZ)
-          sed -i "s/^pub const STEAM_BUILD:.*$/pub const STEAM_BUILD: \&str = \"${NEW_VERSION}\";/" src/lib.rs
+          sed -i "s/^pub const STEAM_BUILD:.*$/pub const STEAM_BUILD: \&str = \"${STEAM_BUILD}\";/" src/lib.rs
           sed -i "s/^pub const GENERATED_AT:.*$/pub const GENERATED_AT: \&str = \"${DATE}\";/" src/lib.rs
 
           echo "version=${NEW_VERSION}" >> "$GITHUB_OUTPUT"

@@ -1,6 +1,6 @@
 //! Auto-updated, type-safe Steam Protobuf definitions for Rust.
 
-/// Steam build metadata used to generate these definitions.
+/// Steam client build number from Valve's CDN manifest.
 pub const STEAM_BUILD: &str = "0.1.11";
 
 /// Timestamp when these definitions were generated.
