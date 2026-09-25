@@ -101,16 +101,63 @@ jobs:
 
           echo "  ✓ steam-protobuf-dumper ready"
 
+      # ── 4b. Download steam-language-gen from GitHub Releases ─────────────────
+      - name: Download steam-language-gen
+        run: |
+          set -euo pipefail
+
+          echo "Fetching latest steam-language-gen release..."
+          DOWNLOAD_URL=$(curl -sL \
+            "https://api.github.com/repos/enXov/steam-language-gen/releases/latest" \
+            | grep -o '"browser_download_url": *"[^"]*x86_64-unknown-linux-gnu[^"]*"' \
+            | head -1 \
+            | cut -d'"' -f4)
+
+          if [[ -z "$DOWNLOAD_URL" ]]; then
+            echo "ERROR: Could not find linux release asset" >&2
+            exit 1
+          fi
+
+          echo "Downloading from ${DOWNLOAD_URL}..."
+          curl -sL -o langgen.tar.gz "$DOWNLOAD_URL"
+          tar xzf langgen.tar.gz
+          chmod +x steam-language-gen
+          rm langgen.tar.gz
+
+          echo "  ✓ steam-language-gen ready"
+
       # ── 5. Run dumper to extract .proto files ────────────────────────────────
       - name: Extract protos
         run: |
           ./steam-protobuf-dumper steam_bins/steamclient.so steam_bins/steamui.so protos/
 
-      # ── 6. Normalize & detect proto changes ─────────────────────────────────
-      # The dumper now produces deterministic output (sorted extend blocks
-      # and field options). We only need buf format for canonical whitespace,
-      # then a simple git diff to detect real changes.
-      - name: Detect proto changes
+      # ── 5b. Fetch .steamd files and generate SteamLanguage enums ────────────
+      - name: Generate SteamLanguage enums
+        run: |
+          set -euo pipefail
+
+          mkdir -p steamlang
+
+          # Dynamically discover all .steamd files from SteamKit's repo
+          echo "Fetching .steamd file list from SteamKit..."
+          FILES=$(curl -sL \
+            "https://api.github.com/repos/SteamRE/SteamKit/contents/Resources/SteamLanguage" \
+            | grep -o '"name": *"[^"]*\.steamd"' \
+            | cut -d'"' -f4)
+
+          RAW_BASE="https://raw.githubusercontent.com/SteamRE/SteamKit/master/Resources/SteamLanguage"
+
+          for FILE in $FILES; do
+            echo "  Fetching ${FILE}..."
+            curl -sL "${RAW_BASE}/${FILE}" -o "steamlang/${FILE}"
+          done
+
+          echo "  Downloaded $(echo "$FILES" | wc -w) .steamd files"
+          ./steam-language-gen steamlang/ src/steam_language.rs
+          echo "  ✓ steam_language.rs generated"
+
+      # ── 6. Normalize & detect changes ───────────────────────────────────────
+      - name: Detect changes
         id: diff
         run: |
           set -euo pipefail
@@ -125,15 +172,27 @@ jobs:
           # Format freshly dumped protos for canonical whitespace
           buf format -w protos/
 
-          if git diff --quiet protos/ && [ -z "$(git ls-files --others --exclude-standard protos/)" ]; then
-            echo "No protobuf content changes."
-            echo "changed=false" >> "$GITHUB_OUTPUT"
-          else
-            echo "Real protobuf changes detected!"
-            echo "changed=true" >> "$GITHUB_OUTPUT"
-            echo
-            echo "Changed files:"
+          # Check for changes in protos/ OR src/steam_language.rs
+          PROTO_CHANGED=false
+          LANG_CHANGED=false
+
+          if ! git diff --quiet protos/ || [ -n "$(git ls-files --others --exclude-standard protos/)" ]; then
+            PROTO_CHANGED=true
+            echo "Protobuf changes detected!"
             git status --short protos/
+          fi
+
+          if ! git diff --quiet src/steam_language.rs; then
+            LANG_CHANGED=true
+            echo "SteamLanguage enum changes detected!"
+            git diff --stat src/steam_language.rs
+          fi
+
+          if [[ "$PROTO_CHANGED" == "true" || "$LANG_CHANGED" == "true" ]]; then
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "No changes detected."
+            echo "changed=false" >> "$GITHUB_OUTPUT"
           fi
 
       # ── 7. Install protoc (required by prost-build) ─────────────────────────
@@ -181,6 +240,7 @@ jobs:
         run: |
           cargo fmt --check
           cargo check
+          cargo check --features steam-language
           cargo package --allow-dirty
 
       # ── 11. Commit, tag, publish ────────────────────────────────────────────
@@ -195,7 +255,7 @@ jobs:
 
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add protos/ src/generated/ Cargo.toml Cargo.lock src/lib.rs
+          git add protos/ src/generated/ src/steam_language.rs Cargo.toml Cargo.lock src/lib.rs
           git commit -m "chore: update Steam protobufs to v${NEW_VERSION}"
           git tag "v${NEW_VERSION}"
           git push origin main --tags

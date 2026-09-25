@@ -13,3 +13,18 @@ pub use prost;
 mod generated;
 
 pub use generated::*;
+/// SteamLanguage enums (EMsg, EResult, EUniverse, etc.)
+/// generated from SteamKit's `.steamd` files.
+///
+/// Enable the `steam-language` feature to use these types:
+/// ```toml
+/// [dependencies]
+/// steam-protobuf-rs = { version = "...", features = ["steam-language"] }
+/// ```
+///
+/// Access enums via `steam_protobuf_rs::steam_language::EResult`, etc.
+/// Some enums (e.g. `EMsg`) exist in both protobuf and steam-language with
+/// different variant sets — the steam-language version is more complete.
+#[cfg(feature = "steam-language")]
+#[allow(clippy::all, non_camel_case_types, non_upper_case_globals, dead_code)]
+pub mod steam_language;

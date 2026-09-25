@@ -2,7 +2,7 @@
 name = "steam-protobuf-rs"
 version = "0.1.11"
 edition = "2024"
-description = "Auto-updated, type-safe Steam Protobuf definitions for Rust"
+description = "Auto-updated, type-safe Steam Protobuf definitions and SteamLanguage enums for Rust"
 license = "MIT OR Apache-2.0"
 repository = "https://github.com/enXov/steam-protobuf-rs"
 readme = "README.md"
@@ -17,6 +17,9 @@ default = []
 # Enable to regenerate Rust types from protos/ via prost-build.
 # Only used in CI and local dev — end users never need this.
 codegen = ["dep:prost-build"]
+# Include SteamLanguage enums (EMsg, EResult, EUniverse, etc.)
+# generated from SteamKit's .steamd files.
+steam-language = []
 
 [dependencies]
 prost = "0.14"
