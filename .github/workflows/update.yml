@@ -2,11 +2,8 @@ name: Update Steam Protobufs
 
 on:
   schedule:
-    # Weekdays: check every 3 hours during business hours (PST).
-    # Offset to :37 to avoid contention with other cron workflows.
-    - cron: "37 9,12,15,18,21 * * MON-FRI"
-    # Weekends: check twice a day.
-    - cron: "37 0,12 * * SAT,SUN"
+    # Weekly check.
+    - cron: "37 17 * * SUN"
   workflow_dispatch:
 
 concurrency:
@@ -47,10 +44,10 @@ jobs:
           echo "  Steam client build: ${STEAM_VERSION}"
           echo "build=${STEAM_VERSION}" >> "$GITHUB_OUTPUT"
 
-          BINS_FILE=$(echo "$MANIFEST" | grep -A3 '"bins_ubuntu12"' | grep '"file"' | awk -F'"' '{print $4}')
+          BINS_FILE=$(echo "$MANIFEST" | grep -A3 '"bins_steamrt_ubuntu12"' | grep '"file"' | awk -F'"' '{print $4}')
 
           if [[ -z "$BINS_FILE" ]]; then
-            echo "ERROR: Could not find bins_ubuntu12 entry in manifest" >&2
+            echo "ERROR: Could not find bins_steamrt_ubuntu12 entry in manifest" >&2
             exit 1
           fi
 
@@ -62,7 +59,7 @@ jobs:
 
           echo "Extracting steamclient.so and steamui.so..."
           mkdir -p steam_bins
-          unzip -o -j "${TEMP_DIR}/bins.zip" "ubuntu12_32/steamclient.so" "ubuntu12_32/steamui.so" -d steam_bins
+          unzip -o -j "${TEMP_DIR}/bins.zip" "steamrt64/steamclient.so" "steamrt64/steamui.so" -d steam_bins
 
           rm -rf "$TEMP_DIR"
 
