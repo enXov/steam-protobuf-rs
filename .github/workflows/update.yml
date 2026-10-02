@@ -40,7 +40,7 @@ jobs:
           MANIFEST=$(curl -sL "$MANIFEST_URL")
 
           # Extract Steam client build version from manifest
-          STEAM_VERSION=$(echo "$MANIFEST" | grep -m1 '"version"' | awk -F'"' '{print $2}' | tail -1)
+          STEAM_VERSION=$(echo "$MANIFEST" | grep -m1 '"version"' | awk -F'"' '{print $4}' | tail -1)
           echo "  Steam client build: ${STEAM_VERSION}"
           echo "build=${STEAM_VERSION}" >> "$GITHUB_OUTPUT"
 
