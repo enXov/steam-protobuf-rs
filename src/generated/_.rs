@@ -5778,9 +5778,9 @@ pub struct ChtmlPageSecurityInfo {
     pub b_is_secure: ::core::option::Option<bool>,
     #[prost(bool, optional, tag = "2", default = "false")]
     pub b_has_cert_error: ::core::option::Option<bool>,
-    #[prost(string, optional, tag = "3")]
+    #[prost(string, optional, tag = "3", default = "")]
     pub issuer_name: ::core::option::Option<::prost::alloc::string::String>,
-    #[prost(string, optional, tag = "4")]
+    #[prost(string, optional, tag = "4", default = "")]
     pub cert_name: ::core::option::Option<::prost::alloc::string::String>,
     #[prost(int32, optional, tag = "5", default = "0")]
     pub cert_expiry: ::core::option::Option<i32>,
@@ -23190,6 +23190,12 @@ pub struct CMsgRemoteClientStartStream {
     pub display_hdr: ::core::option::Option<bool>,
     #[prost(bool, optional, tag = "15", default = "false")]
     pub launch_only: ::core::option::Option<bool>,
+    #[prost(int32, optional, tag = "16")]
+    pub gaming_device_type: ::core::option::Option<i32>,
+    #[prost(int32, optional, tag = "17", default = "-1")]
+    pub cloud_conflict_resolution: ::core::option::Option<i32>,
+    #[prost(int32, optional, tag = "18", default = "-1")]
+    pub controller_config_conflict_resolution: ::core::option::Option<i32>,
 }
 /// Nested message and enum types in `CMsgRemoteClientStartStream`.
 pub mod c_msg_remote_client_start_stream {
@@ -23232,6 +23238,22 @@ pub struct CMsgRemoteClientStartStreamResponse {
     pub vr_connection_params: ::core::option::Option<::prost::alloc::string::String>,
     #[prost(bool, optional, tag = "12", default = "false")]
     pub launch_only: ::core::option::Option<bool>,
+    #[prost(message, optional, tag = "13")]
+    pub cloud_conflict: ::core::option::Option<
+        c_msg_remote_client_start_stream_response::CloudConflict,
+    >,
+}
+/// Nested message and enum types in `CMsgRemoteClientStartStreamResponse`.
+pub mod c_msg_remote_client_start_stream_response {
+    #[derive(Clone, Copy, PartialEq, Eq, Hash, ::prost::Message)]
+    pub struct CloudConflict {
+        #[prost(uint32, optional, tag = "1")]
+        pub appid: ::core::option::Option<u32>,
+        #[prost(uint32, optional, tag = "2")]
+        pub local_time: ::core::option::Option<u32>,
+        #[prost(uint32, optional, tag = "3")]
+        pub remote_time: ::core::option::Option<u32>,
+    }
 }
 #[derive(Clone, Copy, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct CMsgRemoteClientPing {}
@@ -23289,6 +23311,8 @@ pub struct CMsgRemoteClientPairWifiAp {
     pub ssid: ::core::option::Option<::prost::alloc::string::String>,
     #[prost(string, optional, tag = "2")]
     pub password: ::core::option::Option<::prost::alloc::string::String>,
+    #[prost(bool, optional, tag = "3")]
+    pub supports_progress: ::core::option::Option<bool>,
 }
 #[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct CMsgRemoteClientPairWifiApResponse {
@@ -23298,6 +23322,14 @@ pub struct CMsgRemoteClientPairWifiApResponse {
     pub ssid: ::core::option::Option<::prost::alloc::string::String>,
     #[prost(string, optional, tag = "3")]
     pub password: ::core::option::Option<::prost::alloc::string::String>,
+    #[prost(int32, optional, tag = "4")]
+    pub steps_done: ::core::option::Option<i32>,
+    #[prost(int32, optional, tag = "5")]
+    pub steps_total: ::core::option::Option<i32>,
+    #[prost(string, optional, tag = "6")]
+    pub step_name: ::core::option::Option<::prost::alloc::string::String>,
+    #[prost(uint32, optional, tag = "7")]
+    pub estimated_seconds: ::core::option::Option<u32>,
 }
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
 #[repr(i32)]
@@ -23309,6 +23341,8 @@ pub enum ERemoteClientPairWifiApResult {
     KERemoteClientPairWifiApNoDonglePresent = 5,
     KERemoteClientPairWifiApTimeout = 6,
     KERemoteClientPairWifiApCanceled = 7,
+    KERemoteClientPairWifiApProgress = 8,
+    KERemoteClientPairWifiApConnectFailed = 9,
 }
 impl ERemoteClientPairWifiApResult {
     /// String value of the enum field names used in the ProtoBuf definition.
@@ -23330,6 +23364,10 @@ impl ERemoteClientPairWifiApResult {
             }
             Self::KERemoteClientPairWifiApTimeout => "k_ERemoteClientPairWifiAPTimeout",
             Self::KERemoteClientPairWifiApCanceled => "k_ERemoteClientPairWifiAPCanceled",
+            Self::KERemoteClientPairWifiApProgress => "k_ERemoteClientPairWifiAPProgress",
+            Self::KERemoteClientPairWifiApConnectFailed => {
+                "k_ERemoteClientPairWifiAPConnectFailed"
+            }
         }
     }
     /// Creates an enum from field names used in the ProtoBuf definition.
@@ -23351,6 +23389,12 @@ impl ERemoteClientPairWifiApResult {
             }
             "k_ERemoteClientPairWifiAPCanceled" => {
                 Some(Self::KERemoteClientPairWifiApCanceled)
+            }
+            "k_ERemoteClientPairWifiAPProgress" => {
+                Some(Self::KERemoteClientPairWifiApProgress)
+            }
+            "k_ERemoteClientPairWifiAPConnectFailed" => {
+                Some(Self::KERemoteClientPairWifiApConnectFailed)
             }
             _ => None,
         }
@@ -29104,7 +29148,7 @@ pub struct CMsgNetworkDeviceIp4Config {
 }
 #[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct CMsgNetworkDeviceIp6Address {
-    #[prost(string, optional, tag = "1")]
+    #[prost(string, optional, tag = "1", default = "")]
     pub ip: ::core::option::Option<::prost::alloc::string::String>,
 }
 #[derive(Clone, PartialEq, ::prost::Message)]
@@ -33663,6 +33707,8 @@ pub struct CMsgClientSettings {
     pub screensaver_current_id: ::core::option::Option<::prost::alloc::string::String>,
     #[prost(string, optional, tag = "16005")]
     pub screensaver_settings: ::core::option::Option<::prost::alloc::string::String>,
+    #[prost(bool, optional, tag = "16006")]
+    pub screensaver_while_ingame: ::core::option::Option<bool>,
     #[prost(bool, optional, tag = "17001")]
     pub game_notes_enable_spellcheck: ::core::option::Option<bool>,
     #[prost(int32, optional, tag = "18000")]
@@ -34299,7 +34345,7 @@ pub struct CAccountHardwareSteamControllerGetConfigControllerConfig {
     pub publishedfileid: ::core::option::Option<u64>,
     #[prost(string, optional, tag = "3")]
     pub templatename: ::core::option::Option<::prost::alloc::string::String>,
-    #[prost(string, optional, tag = "4")]
+    #[prost(string, optional, tag = "4", default = "")]
     pub serial_number: ::core::option::Option<::prost::alloc::string::String>,
     #[prost(bool, optional, tag = "5", default = "false")]
     pub autosave: ::core::option::Option<bool>,
@@ -34880,7 +34926,7 @@ pub mod c_msg_client_games_played {
         pub launch_option_type: ::core::option::Option<u32>,
         #[prost(int32, optional, tag = "16", default = "-1")]
         pub primary_controller_type: ::core::option::Option<i32>,
-        #[prost(string, optional, tag = "17")]
+        #[prost(string, optional, tag = "17", default = "")]
         pub primary_steam_controller_serial: ::core::option::Option<
             ::prost::alloc::string::String,
         >,
@@ -50503,11 +50549,11 @@ pub struct CContentServerDirectoryGetServersForSteamPipeRequest {
     pub cell_id: ::core::option::Option<u32>,
     #[prost(uint32, optional, tag = "2", default = "20")]
     pub max_servers: ::core::option::Option<u32>,
-    #[prost(string, optional, tag = "3")]
+    #[prost(string, optional, tag = "3", default = "")]
     pub ip_override: ::core::option::Option<::prost::alloc::string::String>,
     #[prost(int32, optional, tag = "4", default = "0")]
     pub launcher_type: ::core::option::Option<i32>,
-    #[prost(string, optional, tag = "5")]
+    #[prost(string, optional, tag = "5", default = "")]
     pub ipv6_public: ::core::option::Option<::prost::alloc::string::String>,
     #[prost(message, repeated, tag = "6")]
     pub current_connections: ::prost::alloc::vec::Vec<

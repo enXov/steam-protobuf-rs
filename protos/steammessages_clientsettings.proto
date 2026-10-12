@@ -625,6 +625,11 @@ message CMsgClientSettings {
     (setting_store) = k_EClientSettingStore_ConfigStore_Install,
     (setting_name) = "Customization/Screensaver/Settings"
   ];
+  optional bool screensaver_while_ingame = 16006 [
+    (setting_store) = k_EClientSettingStore_ConfigStore_Install,
+    (setting_name) = "Customization/Screensaver/WhileInGame",
+    (setting_default_bool) = true
+  ];
   optional bool game_notes_enable_spellcheck = 17001 [
     (setting_store) = k_EClientSettingStore_ConfigStore_UserRoaming,
     (setting_name) = "GameNotesEnableSpellcheck",
