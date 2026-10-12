@@ -37,7 +37,7 @@ jobs:
           CDN_BASE="https://client-update.fastly.steamstatic.com"
 
           echo "Fetching Steam client manifest..."
-          MANIFEST=$(curl -sL "$MANIFEST_URL")
+          MANIFEST=$(curl -fsSL "$MANIFEST_URL")
 
           # Extract Steam client build version from manifest
           STEAM_VERSION=$(echo "$MANIFEST" | grep -m1 '"version"' | awk -F'"' '{print $4}' | tail -1)
@@ -74,24 +74,15 @@ jobs:
           done
 
       # ── 4. Download steam-protobuf-dumper from GitHub Releases ───────────────
+      # Uses the stable /releases/latest/download/<asset> redirect instead of the
+      # REST API: no anonymous rate limits and no JSON parsing failure modes.
       - name: Download dumper
         run: |
           set -euo pipefail
 
           echo "Fetching latest steam-protobuf-dumper release..."
-          DOWNLOAD_URL=$(curl -sL \
-            "https://api.github.com/repos/enXov/steam-protobuf-dumper/releases/latest" \
-            | grep -o '"browser_download_url": *"[^"]*x86_64-unknown-linux-gnu[^"]*"' \
-            | head -1 \
-            | cut -d'"' -f4)
-
-          if [[ -z "$DOWNLOAD_URL" ]]; then
-            echo "ERROR: Could not find linux release asset" >&2
-            exit 1
-          fi
-
-          echo "Downloading from ${DOWNLOAD_URL}..."
-          curl -sL -o dumper.tar.gz "$DOWNLOAD_URL"
+          curl -sfSL --retry 3 --retry-delay 5 --retry-all-errors -o dumper.tar.gz \
+            "https://github.com/enXov/steam-protobuf-dumper/releases/latest/download/steam-protobuf-dumper-x86_64-unknown-linux-gnu.tar.gz"
           tar xzf dumper.tar.gz
           chmod +x steam-protobuf-dumper
           rm dumper.tar.gz
@@ -104,19 +95,8 @@ jobs:
           set -euo pipefail
 
           echo "Fetching latest steam-language-gen release..."
-          DOWNLOAD_URL=$(curl -sL \
-            "https://api.github.com/repos/enXov/steam-language-gen/releases/latest" \
-            | grep -o '"browser_download_url": *"[^"]*x86_64-unknown-linux-gnu[^"]*"' \
-            | head -1 \
-            | cut -d'"' -f4)
-
-          if [[ -z "$DOWNLOAD_URL" ]]; then
-            echo "ERROR: Could not find linux release asset" >&2
-            exit 1
-          fi
-
-          echo "Downloading from ${DOWNLOAD_URL}..."
-          curl -sL -o langgen.tar.gz "$DOWNLOAD_URL"
+          curl -sfSL --retry 3 --retry-delay 5 --retry-all-errors -o langgen.tar.gz \
+            "https://github.com/enXov/steam-language-gen/releases/latest/download/steam-language-gen-x86_64-unknown-linux-gnu.tar.gz"
           tar xzf langgen.tar.gz
           chmod +x steam-language-gen
           rm langgen.tar.gz
@@ -137,10 +117,12 @@ jobs:
 
           # Dynamically discover all .steamd files from SteamKit's repo
           echo "Fetching .steamd file list from SteamKit..."
-          FILES=$(curl -sL \
-            "https://api.github.com/repos/SteamRE/SteamKit/contents/Resources/SteamLanguage" \
+          FILES=$(curl -sfSL "https://api.github.com/repos/SteamRE/SteamKit/contents/Resources/SteamLanguage" \
             | grep -o '"name": *"[^"]*\.steamd"' \
-            | cut -d'"' -f4)
+            | cut -d'"' -f4) || {
+            echo "ERROR: Could not list .steamd files from SteamKit" >&2
+            exit 1
+          }
 
           RAW_BASE="https://raw.githubusercontent.com/SteamRE/SteamKit/master/Resources/SteamLanguage"
 
@@ -151,6 +133,12 @@ jobs:
 
           echo "  Downloaded $(echo "$FILES" | wc -w) .steamd files"
           ./steam-language-gen steamlang/ src/steam_language.rs
+          # Normalize formatting (the generator's raw output, e.g. a trailing blank
+          # line, differs from what cargo fmt produces). This must happen BEFORE
+          # the diff check, otherwise a formatting-only difference triggers a
+          # false-positive "changed" and the workflow publishes an update with no
+          # actual changes.
+          rustfmt src/steam_language.rs
           echo "  ✓ steam_language.rs generated"
 
       # ── 6. Normalize & detect changes ───────────────────────────────────────
