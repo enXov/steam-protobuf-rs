@@ -33,8 +33,11 @@ jobs:
         run: |
           set -euo pipefail
 
-          MANIFEST_URL="https://client-update.fastly.steamstatic.com/steam_client_publicbeta_ubuntu12"
           CDN_BASE="https://client-update.fastly.steamstatic.com"
+
+          # steamrt64 replaces the old ubuntu12 manifest (same structure, renamed
+          # keys); tracked via publicbeta for the newest client build
+          MANIFEST_URL="https://client-update.fastly.steamstatic.com/steam_client_publicbeta_steamrt64"
 
           echo "Fetching Steam client manifest..."
           MANIFEST=$(curl -fsSL "$MANIFEST_URL")
@@ -44,10 +47,10 @@ jobs:
           echo "  Steam client build: ${STEAM_VERSION}"
           echo "build=${STEAM_VERSION}" >> "$GITHUB_OUTPUT"
 
-          BINS_FILE=$(echo "$MANIFEST" | grep -A3 '"bins_steamrt_ubuntu12"' | grep '"file"' | awk -F'"' '{print $4}')
+          BINS_FILE=$(echo "$MANIFEST" | grep -A3 '"bins_steamrt_steamrt64"' | grep '"file"' | awk -F'"' '{print $4}')
 
           if [[ -z "$BINS_FILE" ]]; then
-            echo "ERROR: Could not find bins_steamrt_ubuntu12 entry in manifest" >&2
+            echo "ERROR: Could not find bins_steamrt_steamrt64 entry in manifest" >&2
             exit 1
           fi
 
@@ -57,13 +60,15 @@ jobs:
           echo "Downloading ${BINS_FILE}..."
           curl -sL --progress-bar -o "${TEMP_DIR}/bins.zip" "$DOWNLOAD_URL"
 
-          echo "Extracting steamclient.so and steamui.so..."
+          echo "Extracting steamclient.so, steamui.so and streaming_client..."
           mkdir -p steam_bins
-          unzip -o -j "${TEMP_DIR}/bins.zip" "steamrt64/steamclient.so" "steamrt64/steamui.so" -d steam_bins
+          unzip -o -j "${TEMP_DIR}/bins.zip" \
+            "steamrt64/steamclient.so" "steamrt64/steamui.so" "steamrt64/streaming_client" \
+            -d steam_bins
 
           rm -rf "$TEMP_DIR"
 
-          for BIN in steamclient.so steamui.so; do
+          for BIN in steamclient.so steamui.so streaming_client; do
             if [[ -f "steam_bins/${BIN}" ]]; then
               SIZE=$(du -h "steam_bins/${BIN}" | cut -f1)
               echo "  ✓ ${BIN} (${SIZE})"
@@ -106,7 +111,8 @@ jobs:
       # ── 5. Run dumper to extract .proto files ────────────────────────────────
       - name: Extract protos
         run: |
-          ./steam-protobuf-dumper steam_bins/steamclient.so steam_bins/steamui.so protos/
+          ./steam-protobuf-dumper \
+            steam_bins/steamclient.so steam_bins/steamui.so steam_bins/streaming_client protos/
 
       # ── 5b. Fetch .steamd files and generate SteamLanguage enums ────────────
       - name: Generate SteamLanguage enums
