@@ -234,7 +234,7 @@ jobs:
           cargo check --features steam-language
           cargo package --allow-dirty
 
-      # ── 11. Commit, tag, publish ────────────────────────────────────────────
+      # ── 11. Commit & publish ────────────────────────────────────────────────
       - name: Commit & publish
         if: steps.diff.outputs.changed == 'true'
         env:
@@ -248,7 +248,6 @@ jobs:
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add protos/ src/generated/ src/steam_language.rs Cargo.toml Cargo.lock src/lib.rs
           git commit -m "chore: update Steam protobufs to v${NEW_VERSION}"
-          git tag "v${NEW_VERSION}"
-          git push origin main --tags
+          git push origin main
 
           cargo publish --token "$CRATES_IO_TOKEN" --allow-dirty
