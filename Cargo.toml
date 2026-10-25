@@ -1,6 +1,6 @@
 [package]
 name = "steam-protobuf-rs"
-version = "0.1.15"
+version = "0.1.16"
 edition = "2024"
 description = "Auto-updated, type-safe Steam Protobuf definitions and SteamLanguage enums for Rust"
 license = "MIT OR Apache-2.0"
