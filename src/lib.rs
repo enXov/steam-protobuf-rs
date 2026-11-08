@@ -1,10 +1,10 @@
 //! Auto-updated, type-safe Steam Protobuf definitions for Rust.
 
 /// Steam client build number from Valve's CDN manifest.
-pub const STEAM_BUILD: &str = "1793235415";
+pub const STEAM_BUILD: &str = "1794079253";
 
 /// Timestamp when these definitions were generated.
-pub const GENERATED_AT: &str = "2026-11-01T21:22:30Z";
+pub const GENERATED_AT: &str = "2026-11-08T21:20:44Z";
 
 /// Re-export prost for downstream convenience.
 pub use prost;

@@ -1075,6 +1075,11 @@ message CMsgClientSettings {
     (setting_name) = "VR/ShowPerfGraphInHMD",
     (setting_default_bool) = false
   ];
+  optional string vr_launch_programs_hidden = 25003 [
+    (setting_store) = k_EClientSettingStore_ConfigStore_UserLocal,
+    (setting_name) = "VR/LaunchProgramsHidden",
+    (setting_default_string) = ""
+  ];
   optional bool accessibility_debug_visualizer = 26000 [
     (setting_store) = k_EClientSettingStore_ConfigStore_UserLocal,
     (setting_name) = "Accessibility/DebugVisualizer",
